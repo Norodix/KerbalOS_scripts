@@ -1,31 +1,43 @@
-//SETUP
+////////LANDING PARAMETERS/////////////
+declare local DeorbitPeriapsis to 5000.
+declare local FastForward100 to 100000.
+declare local FastForward10 to 20000.
+declare local WaitBeforeHorizontal to 10000.
+
+
+//////////////SETUP///////////////////
 sas off.
 rcs on.
 set ship:control:mainthrottle to 0. //turn off throttle so at the end it does not fly up again.
 
-
-//deorbit
+//////////////DEORBIT////////////////
 lock myvel to ship:velocity:surface.
 lock horizontalVelocity to myvel-up:vector*verticalSpeed.
-lock steering to (-1 * horizontalVelocity):direction. //reverse horizontal direction
-wait 5. //let steering settle
+//lock steering to (-1 * horizontalVelocity):direction. //reverse horizontal direction
+if (periapsis > DeorbitPeriapsis){
+    lock steering to retrograde.
+    wait 5. //let steering settle
 
-lock throttle to 1.
-wait until horizontalVelocity:mag < 10.
+    lock throttle to 1.
+    wait until periapsis < DeorbitPeriapsis.
+}
 
 lock throttle to 0.
 wait 1.
-if (altitude > 100000){
+if (altitude > FastForward100){
     set kuniverse:timewarp:rate to 100.
-    wait until altitude < 100000.
+    wait until altitude < FastForward100.
 }
-if (altitude > 50000){
+if (altitude > FastForward10){
     set kuniverse:timewarp:rate to 10.
-    wait until altitude < 50000.
+    wait until altitude < FastForward10.
 }
 kuniverse:timewarp:cancelwarp().
 wait until kuniverse:timewarp:issettled().
-wait 5.
+
+///////////HORIZONTAL BURN//////////////
+lock steering to (-1 * horizontalVelocity):direction. //reverse horizontal direction
+wait until ship:bounds:bottomaltradar<WaitBeforeHorizontal.
 
 if (horizontalVelocity:mag > 10){
     lock throttle to 1.
@@ -37,12 +49,12 @@ if (horizontalVelocity:mag > 1){
     wait until horizontalVelocity:mag < 1.
 }
 
-if (horizontalVelocity:mag > 0.01){
+if (horizontalVelocity:mag > 0.1){
     lock throttle to 0.01.
     wait until horizontalVelocity:mag < 0.01.
 }
 
-//perform suicideburn
+/////////////SUICIDEBURN///////////////
 declare global tolerance to 50.
 declare global stopSpeed to 20.
 run suicideburn.
@@ -51,4 +63,5 @@ set tolerance to 1.
 set stopSpeed to 0.
 run suicideburn.
 
+///////////TOUCHDOWN/////////////////
 run touchdown.
