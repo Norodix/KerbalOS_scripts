@@ -11,6 +11,8 @@ rcs on.
 set ship:control:mainthrottle to 0. //turn off throttle so at the end it does not fly up again.
 
 //////////////DEORBIT////////////////
+print "Deorbiting vessel to periapsis under " + DeorbitPeriapsis.
+
 lock myvel to ship:velocity:surface.
 lock horizontalVelocity to myvel-up:vector*verticalSpeed.
 //lock steering to (-1 * horizontalVelocity):direction. //reverse horizontal direction
@@ -23,6 +25,8 @@ if (periapsis > DeorbitPeriapsis){
 }
 
 lock throttle to 0.
+
+print "Fast forward until altitude < " + FastForward10.
 wait 1.
 if (altitude > FastForward100){
     set kuniverse:timewarp:rate to 100.
@@ -36,6 +40,7 @@ kuniverse:timewarp:cancelwarp().
 wait until kuniverse:timewarp:issettled().
 
 ///////////HORIZONTAL BURN//////////////
+print "Kill horizontal velocity".
 lock steering to (-1 * horizontalVelocity):direction. //reverse horizontal direction
 wait until ship:bounds:bottomaltradar<WaitBeforeHorizontal.
 
@@ -55,6 +60,7 @@ if (horizontalVelocity:mag > 0.1){
 }
 
 /////////////SUICIDEBURN///////////////
+print "Suicide burn".
 declare global tolerance to 50.
 declare global stopSpeed to 20.
 run suicideburn.
@@ -64,4 +70,5 @@ set stopSpeed to 0.
 run suicideburn.
 
 ///////////TOUCHDOWN/////////////////
+print "Touchdown".
 run touchdown.
