@@ -12,8 +12,8 @@ set myship:control:mainthrottle to 0. //turn off throttle so at the end it does 
 
 
 local gravity to constant:g*mybody:mass/(mybody:radius^2).
-lock verticalVelocity to myship:up:vector*abs(myship:verticalSpeed).
-lock steering to (verticalVelocity - 10*(myship:velocity:surface-verticalVelocity)):direction. //lock against velocity with a bias to horizontal
+lock verticalVelocity to myship:up:vector * myship:verticalSpeed. // upwards vertical speed
+lock steering to (- verticalVelocity - 0.1*(myship:velocity:surface-verticalVelocity)):direction. //lock against velocity with a bias to horizontal
 
 //calculate my maximum acceleration
 local acc to myship:availablethrust/myship:mass.
@@ -21,7 +21,7 @@ local acc to myship:availablethrust/myship:mass.
 lock throttle to 0.
 
 //a few meters of tolerance
-if NOT (defined tolerance) {declare local tolerance to 10.}
+if NOT (defined tolerance) {global tolerance is 10.}
 
 local myheight to B:bottomaltradar.
 local dh to 0. // the height difference between iteration steps to make sure manoveour is not too late
