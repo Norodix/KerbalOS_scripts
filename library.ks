@@ -36,3 +36,39 @@ function minmax{
     parameter max_bound.
     return min(max(value, min_bound), max_bound).
 }
+
+
+function project {
+    parameter v.
+    parameter v_to.
+
+    local len to vdot(v, v_to:normalized).
+    return v_to:normalized * len.
+}
+
+function raycast {
+    //iterative raycast to find landing point etc.
+    parameter ray.
+    parameter iterations.
+
+    local ray_v to project(ray, ship:up:vector).
+    local ray_h to ray - ray_v.
+    // horizontal component size of ray divided by vertical
+    local ray_multiplier to ray_h:mag / ray_v:mag.
+
+    local p to ship:position.
+    local terrain_h to 0.
+    local height to 0.
+    FROM {local i is iterations.} UNTIL i = 0 STEP {set i to i-1.} DO {
+        // get altitude at p
+        set terrain_h to body:geopositionof(p):terrainheight.
+        //print "terrain_h: " + terrain_h.
+        // calculate corresponding height
+        set height to ship:bounds:bottomalt - terrain_h.
+        //print "height: " + height.
+        // calculate new point on ray
+        set p to ship:position + ray_multiplier * height * ray_h:normalized.
+        //print "newstep: " + p.
+    }
+    return (p - ship:position):mag / ray_h:mag * ray.
+}

@@ -10,10 +10,15 @@ rcs on.
 gear on.
 set myship:control:mainthrottle to 0. //turn off throttle so at the end it does not fly up again.
 
+//stopspeed is the speed at which the manouver is finished (residual vertical speed after the manoveour)
+if NOT (defined stopSpeed) declare local stopSpeed to 0.
+//a few meters of tolerance
+if NOT (defined tolerance) {global tolerance is 10.}
+if NOT (defined horizontal_factor) {global horizontal_factor is 0.1.}
 
 local gravity to constant:g*mybody:mass/(mybody:radius^2).
 lock verticalVelocity to myship:up:vector * myship:verticalSpeed. // upwards vertical speed
-lock steering to (- verticalVelocity - 0.1*(myship:velocity:surface-verticalVelocity)):direction. //lock against velocity with a bias to horizontal
+lock steering to (- verticalVelocity - horizontal_factor*(myship:velocity:surface-verticalVelocity)):direction. //lock against velocity with a bias to horizontal
 
 //calculate my maximum acceleration
 local acc to myship:availablethrust/myship:mass.

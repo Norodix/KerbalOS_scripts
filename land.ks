@@ -1,8 +1,8 @@
 ////////LANDING PARAMETERS/////////////
 declare local DeorbitPeriapsis to 5000.
 declare local FastForward100 to 100000.
-declare local FastForward10 to 20000.
-declare local WaitBeforeHorizontal to 10000.
+declare local FastForward10 to 40000.
+declare local WaitBeforeHorizontal to 20000.
 
 
 //////////////SETUP///////////////////
@@ -32,6 +32,10 @@ if (altitude > FastForward100){
     set kuniverse:timewarp:rate to 100.
     wait until altitude < FastForward100.
 }
+
+lock steering to (-1 * horizontalVelocity):direction. //reverse horizontal direction
+wait 15.
+
 if (altitude > FastForward10){
     set kuniverse:timewarp:rate to 10.
     wait until altitude < FastForward10.
@@ -40,33 +44,39 @@ kuniverse:timewarp:cancelwarp().
 wait until kuniverse:timewarp:issettled().
 
 ///////////HORIZONTAL BURN//////////////
+//// THIS IS SHITE //////
+// fix stupid turning issue
 print "Kill horizontal velocity".
-lock steering to (-1 * horizontalVelocity):direction. //reverse horizontal direction
 wait until ship:bounds:bottomaltradar<WaitBeforeHorizontal.
 
-if (horizontalVelocity:mag > 10){
-    lock throttle to 1.
-    wait until horizontalVelocity:mag < 10.
+until horizontalVelocity:mag < 10 {
+    if vectorAngle(ship:facing:forevector, horizontalVelocity) > (175){
+        lock throttle to 1.
+    }
+    else lock throttle to 0.
+    wait 0.01.
 }
 
-if (horizontalVelocity:mag > 1){
-    lock throttle to 0.1.
-    wait until horizontalVelocity:mag < 1.
+until (horizontalVelocity:mag < 1){
+    print vectorAngle(ship:facing:forevector, horizontalVelocity).
+    if vectorAngle(ship:facing:forevector, horizontalVelocity) > (175){
+        lock throttle to 0.1.
+    }
+    else lock throttle to 0.
+    wait 0.01.
 }
 
-if (horizontalVelocity:mag > 0.1){
-    lock throttle to 0.01.
-    wait until horizontalVelocity:mag < 0.01.
-}
 
 /////////////SUICIDEBURN///////////////
 print "Suicide burn".
 declare global tolerance to 50.
 declare global stopSpeed to 20.
+declare global horizontal_factor to 0.2.
 run suicideburn.
 
 set tolerance to 1.
 set stopSpeed to 0.
+declare global horizontal_factor to 0.3.
 run suicideburn.
 
 ///////////TOUCHDOWN/////////////////
