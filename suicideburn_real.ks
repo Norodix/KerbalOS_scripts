@@ -36,46 +36,44 @@ lock finalV to sqrt(ship:velocity:surface:mag ^ 2 + 2 * deltaU / ship:mass).
 
 wait until ship:verticalspeed < 0.
 
-local vv to vdot(ship:velocity:surface:normalized, ship:up:vector).
+lock vv to vdot(ship:velocity:surface:normalized, ship:up:vector).
 lock travel to abs(ship:bounds:bottomaltradar) * ship:velocity:surface:normalized:mag / abs(vv).
 
 
-if travel > tolerance {
+lock desiredFacing to (-1 * ship:velocity:surface).
+lock steering to desiredFacing:direction. //lock against velocity
+lock throttle to 0.
 
-    lock desiredFacing to (-1 * ship:velocity:surface).
-    lock steering to desiredFacing:direction. //lock against velocity
-    lock throttle to 0.
+local myheight to B:bottomaltradar.
+local dh to 0.
+local rr to raycast(ship:velocity:surface, 5).
+lock distance to min(travel, rr:mag).
+until distance - tolerance - dh < ((ship:velocity:surface:mag^2 - stopSpeed^2) / (2 * acc)) OR distance < tolerance
+{
+    set dh to myheight-B:bottomaltradar.
+    set myheight to B:bottomaltradar.
+    set rr to raycast(ship:velocity:surface, 5).
+    clearScreen.
+    print "Target: stop at " + round(tolerance) + "m at speed " + round(stopSpeed) + "m/s".
+    print "Travel: " + round(travel).
+    print "Ray:    " + round(rr:mag).
+    print "Height: " + round(myheight).
+    print "Burn at distance: " + round(((ship:velocity:surface:mag^2 - stopSpeed^2) / (2 * acc)) + tolerance).
+    print "Waiting for last second".
+    print "maximum acceleration: " + round(acc, 1).
+}
 
-    local myheight to B:bottomaltradar.
-    local dh to 0.
-    local rr to raycast(ship:velocity:surface, 5).
-    lock distance to min(travel, rr:mag).
-    until distance - tolerance - dh < ((ship:velocity:surface:mag^2 - stopSpeed^2) / (2 * acc))
-    {
-        set dh to myheight-B:bottomaltradar.
-        set myheight to B:bottomaltradar.
-        set rr to raycast(ship:velocity:surface, 5).
-        clearScreen.
-        print "Travel: " + round(travel).
-        print "Ray:    " + round(rr:mag).
-        print "Height: " + round(myheight).
-        print "Burn at distance: " + round(((ship:velocity:surface:mag^2 - stopSpeed^2) / (2 * acc)) + tolerance).
-        print "Waiting for last second".
-        print "maximum acceleration: " + round(acc, 1).
-    }
+lock idealThrust to original_acc/(myship:availablethrust/myship:mass).
+//lock throttle to idealThrust.
+lock throttle to 1.
 
-    lock idealThrust to original_acc/(myship:availablethrust/myship:mass).
-    //lock throttle to idealThrust.
-    lock throttle to 1.
-
-    until myship:velocity:surface:mag < stopSpeed {
-        clearScreen.
-        print "Waiting to turn off".
-        print "Stop speed: " + round(stopSpeed, 1).
-        print "Travel: " + round(travel, 2) + "     v: " + round(ship:velocity:surface:mag, 2).
-        if vDot(desiredFacing, ship:facing:vector) > 0.95 lock throttle to 1.
-        else lock throttle to 0.
-    }
+until myship:velocity:surface:mag < stopSpeed {
+    clearScreen.
+    print "Waiting to turn off".
+    print "Stop speed: " + round(stopSpeed, 1).
+    print "Travel: " + round(travel, 2) + "     v: " + round(ship:velocity:surface:mag, 2).
+    if vDot(desiredFacing, ship:facing:vector) > 0.95 lock throttle to 1.
+    else lock throttle to 0.
 }
 
 lock throttle to 0.
