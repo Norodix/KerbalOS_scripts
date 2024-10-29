@@ -109,6 +109,14 @@ function dock {
     rcs_shift(0.2).
 }
 
+function get_avoidsize {
+    set othersize to othership:bounds:size:mag.
+    set thissize to ship:bounds:size:mag.
+    set avoidsize to (thissize + othersize) * 1.5.
+    // worst case scenario this has 20% margin of error. Normally 200%
+    return avoidsize.
+}
+
 function move_docking_side {
     sas off.
     match_velocity_rcs().
@@ -132,9 +140,7 @@ function move_docking_side {
     print "Direction matched, approach target".
 
     //TODO position itself in front of target's docking port.
-    set othersize to othership:bounds:relmax:mag.
-    set thissize to ship:bounds:relmax:mag.
-    set avoidsize to (thissize + othersize) * 1.5.
+    set avoidsize to get_avoidsize().
     set manouverdir to V(0, 0, 0).
     if vdot(target:facing:vector, (ship:position - target:position):normalized) < 0 {
         print "Target docking port is facing away.".
@@ -180,6 +186,64 @@ function move_docking_side {
     match_velocity_rcs().
 }
 
+function position_docking {
+    // Nicer docking positioning that goes around the other vessel in a V shape 
+    // With only 2 edges this V could get to any side of the target vessel
+    // The V can be constructed in a way that it avoids the bounding sphere of the vessel if the distance kept is large enough
+    // Minimum distance is sqrt(2) * safe_radius
+    // The 1.5 margin of error of avoiddistance provides this safety margin.
+    print "Why is this not printing".
+    if not target:istype("DockingPort") {
+        print "A docking port is supposed to be the TARGET during docking".
+        return.
+    }
+    sas off.
+    match_velocity_rcs().
+    // TODO this is cheating but must cancel other vessel's rotation
+    set warp to 2.
+    wait until kuniverse:timewarp:issettled.
+    kuniverse:timewarp:cancelwarp().
+    wait until kuniverse:timewarp:issettled.
+    set avoidsize to get_avoidsize().
+    print "Using avoid distance: " + avoidsize.
+
+    // go to the safe radius
+    // offset relative to the desired position
+    print "Go to safe radius".
+    lock steering to "kill".
+    lock offset to ship:position - ((ship:position - target:position):normalized * avoidsize + target:position).
+    set targetspeed to 5.
+    rcs_shift(2).
+
+    // do the V shaped move
+    set endpoint to target:facing:vector:normalized * avoidsize + target:position.
+    set startpoint to (ship:position - target:position):normalized * avoidsize + target:position.
+    set averagepoint to (endpoint + startpoint) / 2.
+    set midpoint to (averagepoint - target:position):normalized * avoidsize + target:position.
+    set midpoint_rel_other to midpoint - target:position.
+    set endpoint_rel_other to endpoint - target:position.
+
+//    set vec1 TO VECDRAW(V(0, 0, 0), endpoint, RGB(1, 0, 0), "", 1, TRUE, 0.2, TRUE, TRUE).
+//    set vec2 TO VECDRAW(V(0, 0, 0), startpoint, RGB(0, 1, 0), "", 1, TRUE, 0.2, TRUE, TRUE).
+//    set vec3 TO VECDRAW(V(0, 0, 0), averagepoint, RGB(1, 1, 0), "", 1, TRUE, 0.2, TRUE, TRUE).
+//    set vec4 TO VECDRAW(V(0, 0, 0), midpoint, RGB(0, 0, 1), "", 1, TRUE, 0.2, TRUE, TRUE).
+//    return.
+
+    print "Go to midpoint".
+    lock steering to "kill".
+    lock offset to ship:position - (target:position + midpoint_rel_other).
+    set targetspeed to 5.
+    rcs_shift(2).
+
+    print "Go to endpoint".
+    lock steering to "kill".
+    lock offset to ship:position - (target:position + endpoint_rel_other).
+    set targetspeed to 5.
+    rcs_shift(2).
+
+    match_velocity_rcs().
+}
+
 set KEY_APPROACH_MEDIUM to "m".
 set KEY_APPROACH_NEAR to   "n".
 set KEY_APPROACH to        "a".
@@ -187,10 +251,11 @@ set KEY_DOCK to            "d".
 set KEY_POSITION to        "p".
 set KEY_STOP to            "s".
 set KEY_EXIT to            "x".
+set KEY_HELP to            "h".
 
 function print_help {
-    print " "
-    print "Full docking suite"
+    print " ".
+    print "Full docking suite".
     print "  Approach full routine:       " + KEY_APPROACH.
     print "  Approach medium distance:    " + KEY_APPROACH_MEDIUM.
     print "  Approach near distance:      " + KEY_APPROACH_NEAR.
@@ -238,8 +303,10 @@ until stop {
     if ch = KEY_APPROACH {
         print "Perform full approach".
         lock offset to ship:position - target:position.
-        approach(200, 40, 20).
-        approach(10, 10, 40).
+        approach(400, 40, 20).
+        approach(200, 20, 20).
+        set avoidsize to get_avoidsize().
+        approach(avoidsize, 10, 40).
         match_velocity_rcs().
     }
 
@@ -256,12 +323,17 @@ until stop {
 
     if ch = KEY_POSITION {
         print "Position in front of docking port".
-        move_docking_side().
+        //move_docking_side().
+        position_docking().
     }
 
     if ch = KEY_EXIT {
         print "Stop execution. An error is to be expected.".
         set stop to true.
+    }
+
+    if ch = KEY_HELP {
+        print_help().
     }
 }
 
