@@ -186,6 +186,19 @@ set KEY_POSITION to        "p".
 set KEY_STOP to            "s".
 set KEY_EXIT to            "x".
 
+function print_help {
+    print " "
+    print "Full docking suite"
+    print "  Approach full routine:       " + KEY_APPROACH.
+    print "  Approach medium distance:    " + KEY_APPROACH_MEDIUM.
+    print "  Approach near distance:      " + KEY_APPROACH_NEAR.
+    print "  Position vessel for docking: " + KEY_POSITION.
+    print "  Perform docking:             " + KEY_DOCK.
+    print "  Stop movement with RCS:      " + KEY_STOP.
+    print "  Exit script:                 " + KEY_EXIT.
+    print "  Print help:                  " + KEY_HELP.
+}
+
 // Prepare main section
 set ship:control:neutralize to true.
 rcs off.
@@ -199,8 +212,9 @@ lock offset to ship:position - target:position.
 lock deltaspeed to othership:velocity:orbit - ship:velocity:orbit.
 lock v_error to deltaspeed - offset:normalized * targetspeed.
 
-
 print "Welcome to the docking experience!".
+print_help().
+
 set stop to false.
 until stop {
     print " ".
