@@ -5,6 +5,7 @@
 function match_velocity_rcs {
     declare global targetspeed to 0.
     rcs on.
+    sas off.
     lock steering to "kill".
     until v_error:mag < 0.01 {
         set mult to 1.
@@ -28,8 +29,8 @@ function approach {
 
     until offset:mag < targetoffset {
         sas off.
-        declare global targetspeed to min(targetspeed_max, offset:mag / targetspeed_div).
         until v_error:mag < 0.1 {
+            declare global targetspeed to min(targetspeed_max, offset:mag / targetspeed_div).
             lock steering to v_error.
             if vdot(ship:facing:vector, v_error:normalized) > 0.99 {
                 set a to ship:maxthrust / ship:mass.
@@ -54,6 +55,7 @@ function approach {
 }
 
 function rcs_shift {
+    // TODO this uses a bit too much monopropellant
     // mandatory global paramter is the targetspeed
     // mandatory global paramter is the offset (offset should contain the vector relative to the desired position)
     // mandatory global paramter is the v_error
